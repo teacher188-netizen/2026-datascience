@@ -77,3 +77,7 @@ with st.expander("📋 연도별 연평균 기온 데이터 보기"):
         use_container_width=True,
         hide_index=True
     )
+# 일별 평균기온의 분포
+st.header("일별 평균기온은 어느 구간에 몰려 있나")
+fig2 = px.histogram(df, x="평균기온", nbins=50)
+st.plotly_chart(fig2, width="stretch")
