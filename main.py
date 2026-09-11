@@ -255,3 +255,86 @@ st.info(
     f"총 관객이 가장 많은 영화는 **{top_movie['movieNm']}**로 "
     f"**{top_movie['total_audi']:,.0f}명**의 관객을 기록했습니다."
 )
+
+# ==================================================
+# 4. 개봉일 스크린수와 총 관객의 관계
+# ==================================================
+
+st.divider()
+
+st.subheader("🔵 그래프 4. 개봉일 스크린수와 총 관객의 관계")
+
+st.markdown(
+    """
+    개봉 첫날 스크린을 많이 확보한 영화가
+    총 관객도 많이 모았는지 살펴보세요.
+    """
+)
+
+# 필요한 데이터 숫자로 변환
+scatter_df = df.copy()
+
+scatter_df["first_scrn"] = pd.to_numeric(
+    scatter_df["first_scrn"],
+    errors="coerce"
+)
+
+scatter_df["total_audi"] = pd.to_numeric(
+    scatter_df["total_audi"],
+    errors="coerce"
+)
+
+# 필요한 값이 없는 영화 제외
+scatter_df = scatter_df.dropna(
+    subset=["first_scrn", "total_audi", "movieNm", "genre_first"]
+)
+
+fig4 = px.scatter(
+    scatter_df,
+    x="first_scrn",
+    y="total_audi",
+    color="genre_first",
+    hover_name="movieNm",
+    title="개봉일 스크린수와 총 관객의 관계",
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "total_audi": "총 관객 수",
+        "genre_first": "장르"
+    }
+)
+
+fig4.update_traces(
+    hovertemplate=(
+        "<b>%{hovertext}</b><br>"
+        "개봉일 스크린수: %{x:,.0f}개<br>"
+        "총 관객: %{y:,.0f}명"
+        "<extra></extra>"
+    )
+)
+
+fig4.update_layout(
+    height=650,
+    margin=dict(t=70, b=50, l=30, r=30),
+    xaxis_title="개봉일 스크린수",
+    yaxis_title="총 관객 수",
+    legend_title="장르"
+)
+
+st.plotly_chart(
+    fig4,
+    use_container_width=True
+)
+
+
+# ==================================================
+# 그래프 4 해석
+# ==================================================
+
+st.markdown("### 💡 이 그래프로 알 수 있는 것")
+
+st.text_area(
+    "그래프를 보고 알 수 있는 점을 한 문장으로 써 보세요.",
+    placeholder="예: 개봉일 스크린수가 많은 영화일수록 총 관객이 많은 경향이 나타난다.",
+    height=100,
+    key="graph4_observation"
+)
