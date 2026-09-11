@@ -7,306 +7,112 @@ import plotly.express as px
 # 기본 설정
 # ==================================================
 st.set_page_config(
-    page_title="영화 데이터 그래프 도감 1 - 시간",
+    page_title="영화 데이터 그래프 도감 2 - 분포와 관계",
     page_icon="🎬",
     layout="wide"
 )
 
-st.title("🎬 영화 데이터 그래프 도감 1 - 시간")
 
-DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_daily.csv"
+# ==================================================
+# 제목
+# ==================================================
+st.title("🎬 영화 데이터 그래프 도감 2 - 분포와 관계")
+
+st.markdown(
+    """
+    1년간 박스오피스 10위권에 든 영화 가운데
+    이 기간에 개봉한 **216편의 영화 데이터**를 살펴봅니다.
+    """
+)
 
 
 # ==================================================
 # 데이터 불러오기
 # ==================================================
-@st.cache_data
-def load_data():
-    df = pd.read_csv(DATA_URL)
+DATA_URL = (
+    "https://raw.githubusercontent.com/greatsong/modudata/main/data/"
+    "kobis_movies.csv"
+)
 
-    # 날짜를 진짜 날짜 형식으로 변환
-    df["날짜"] = pd.to_datetime(
-        df["날짜"].astype(str),
-        format="%Y%m%d"
-    )
-
-    return df
-
-
-df = load_data()
+df = pd.read_csv(DATA_URL)
 
 
 # ==================================================
-# 1. 영화별 날짜에 따른 일관객 변화
+# 데이터 전처리
 # ==================================================
-st.header("1. 영화별 날짜에 따른 일관객 변화")
 
-movie_list = sorted(df["영화명"].dropna().unique())
-
-selected_movie = st.selectbox(
-    "영화를 선택하세요.",
-    movie_list
+# 장르가 여러 개 적혀 있는 경우 첫 번째 장르만 사용
+df["genre_first"] = (
+    df["genre"]
+    .fillna("미상")
+    .astype(str)
+    .str.split("|")
+    .str[0]
+    .str.strip()
 )
 
-movie_df = (
-    df[df["영화명"] == selected_movie]
-    .sort_values("날짜")
-)
-
-fig1 = px.line(
-    movie_df,
-    x="날짜",
-    y="일관객",
-    markers=True,
-    title=f"{selected_movie}의 날짜별 일관객 변화",
-    labels={
-        "날짜": "날짜",
-        "일관객": "일관객 수"
-    }
-)
-
-fig1.update_traces(
-    hovertemplate=(
-        "날짜: %{x|%Y-%m-%d}<br>"
-        "관객수: %{y:,}명"
-        "<extra></extra>"
-    )
-)
-
-fig1.update_layout(
-    hovermode="x unified",
-    xaxis_title="날짜",
-    yaxis_title="일관객 수"
-)
-
-st.plotly_chart(
-    fig1,
-    use_container_width=True
-)
-
-st.info(
-    "💡 이 그래프로 알 수 있는 것: "
-    "선택한 영화의 날짜별 관객 수가 어떻게 변했는지 확인할 수 있습니다."
-)
+# 빈 값 처리
+df["genre_first"] = df["genre_first"].replace("", "미상")
 
 
 # ==================================================
-# 2. 일관객 합계가 가장 큰 영화 5편
+# 1. 장르별 영화 편수
 # ==================================================
-st.header("2. 일관객 합계가 가장 큰 영화 5편")
 
-st.write(
-    "전체 기간 동안 일관객 합계가 가장 큰 5편을 골라 "
-    "날짜별 관객 수 변화를 비교합니다."
-)
+st.divider()
 
-top5_movies = (
-    df.groupby("영화명")["일관객"]
-    .sum()
-    .sort_values(ascending=False)
-    .head(5)
-    .index
-)
+st.subheader("📊 그래프 1. 장르별 영화 편수")
 
-top5_df = (
-    df[df["영화명"].isin(top5_movies)]
-    .sort_values(["날짜", "영화명"])
-)
-
-fig2 = px.line(
-    top5_df,
-    x="날짜",
-    y="일관객",
-    color="영화명",
-    markers=True,
-    title="일관객 합계 상위 5편의 날짜별 일관객 변화",
-    labels={
-        "날짜": "날짜",
-        "일관객": "일관객 수",
-        "영화명": "영화"
-    }
-)
-
-fig2.update_traces(
-    hovertemplate=(
-        "영화: %{fullData.name}<br>"
-        "날짜: %{x|%Y-%m-%d}<br>"
-        "관객수: %{y:,}명"
-        "<extra></extra>"
-    )
-)
-
-fig2.update_layout(
-    hovermode="x unified",
-    xaxis_title="날짜",
-    yaxis_title="일관객 수",
-    legend_title="영화"
-)
-
-st.plotly_chart(
-    fig2,
-    use_container_width=True
-)
-
-st.info(
-    "💡 이 그래프로 알 수 있는 것: "
-    "기간 동안 가장 많은 관객을 모은 영화 5편의 흥행 추이를 날짜별로 비교할 수 있습니다."
-)
-
-
-# ==================================================
-# 3. 날짜별 전체 10위권 일관객 합계
-# ==================================================
-st.header("3. 날짜별 10위권 일관객 합계")
-
-st.write(
-    "매일 박스오피스 10위권 영화의 일관객을 모두 합산하여 "
-    "전체적인 영화 관람 규모의 변화를 확인합니다."
-)
-
-daily_total = (
-    df.groupby("날짜", as_index=False)["일관객"]
-    .sum()
-    .sort_values("날짜")
-)
-
-# 일관객 합계가 가장 큰 3일
-top3_days = (
-    daily_total
-    .nlargest(3, "일관객")
-    .sort_values("날짜")
-)
-
-fig3 = px.area(
-    daily_total,
-    x="날짜",
-    y="일관객",
-    title="날짜별 10위권 일관객 합계",
-    labels={
-        "날짜": "날짜",
-        "일관객": "10위권 일관객 합계"
-    }
-)
-
-fig3.update_traces(
-    hovertemplate=(
-        "날짜: %{x|%Y-%m-%d}<br>"
-        "10위권 일관객 합계: %{y:,}명"
-        "<extra></extra>"
-    )
-)
-
-fig3.add_scatter(
-    x=top3_days["날짜"],
-    y=top3_days["일관객"],
-    mode="markers+text",
-    text=[
-        date.strftime("%Y-%m-%d")
-        for date in top3_days["날짜"]
-    ],
-    textposition="top center",
-    marker=dict(
-        size=10,
-        color="red"
-    ),
-    name="관객 수 TOP 3",
-    hovertemplate=(
-        "날짜: %{x|%Y-%m-%d}<br>"
-        "10위권 일관객 합계: %{y:,}명"
-        "<extra></extra>"
-    )
-)
-
-fig3.update_layout(
-    hovermode="x unified",
-    xaxis_title="날짜",
-    yaxis_title="10위권 일관객 합계",
-    showlegend=False
-)
-
-st.plotly_chart(
-    fig3,
-    use_container_width=True
-)
-
-st.info(
-    "💡 이 그래프로 알 수 있는 것: "
-    "날짜별 전체적인 영화 관람 규모와 관객이 가장 많이 몰린 날을 확인할 수 있습니다."
-)
-
-
-# ==================================================
-# 4. 영화별 누적 일관객 TOP 10
-# ==================================================
-st.header("4. 영화별 누적 일관객 TOP 10")
-
-st.write(
-    "이 기간 동안 일관객을 모두 더해 관객 수가 가장 많은 "
-    "영화 10편을 비교합니다."
-)
-
-# 영화별 일관객 합계 + 10위권 등장 일수 계산
-movie_summary = (
-    df.groupby("영화명")
-    .agg(
-        일관객합계=("일관객", "sum"),
-        등장일수=("날짜", "nunique")
-    )
+genre_count = (
+    df["genre_first"]
+    .value_counts()
     .reset_index()
 )
 
-# 일관객 합계가 많은 순으로 TOP 10
-top10_movies = (
-    movie_summary
-    .sort_values("일관객합계", ascending=False)
-    .head(10)
-    .sort_values("일관객합계", ascending=True)
+genre_count.columns = ["장르", "영화 편수"]
+
+total_movies = genre_count["영화 편수"].sum()
+
+fig = px.pie(
+    genre_count,
+    names="장르",
+    values="영화 편수",
+    hole=0.5,
+    title="장르별 영화 편수"
 )
 
-fig4 = px.bar(
-    top10_movies,
-    x="일관객합계",
-    y="영화명",
-    orientation="h",
-    title="영화별 일관객 합계 TOP 10",
-    labels={
-        "일관객합계": "일관객 합계",
-        "영화명": "영화"
-    }
-)
-
-fig4.update_traces(
+fig.update_traces(
+    textinfo="percent",
     hovertemplate=(
-        "영화: %{y}<br>"
-        "일관객 합계: %{x:,}명<br>"
-        "10위권 등장일수: %{customdata}일"
-        "<extra></extra>"
-    ),
-    customdata=top10_movies["등장일수"]
-)
-
-fig4.update_layout(
-    xaxis_title="일관객 합계",
-    yaxis_title="영화",
-    yaxis=dict(
-        categoryorder="total ascending"
+        "<b>%{label}</b><br>"
+        "영화 편수: %{value}편<br>"
+        "비율: %{percent}<extra></extra>"
     )
 )
 
+fig.update_layout(
+    height=550,
+    margin=dict(t=70, b=30, l=30, r=30),
+    legend_title="장르"
+)
+
 st.plotly_chart(
-    fig4,
+    fig,
     use_container_width=True
 )
 
-st.info(
-    "💡 이 그래프로 알 수 있는 것: "
-    "기간 동안 가장 많은 관객을 모은 영화와 그 영화가 10위권에 등장한 날수를 비교할 수 있습니다."
+
+# ==================================================
+# 그래프로 알 수 있는 것
+# ==================================================
+
+st.markdown("---")
+
+st.markdown("### 💡 이 그래프로 알 수 있는 것")
+
+st.text_area(
+    "그래프를 보고 알 수 있는 점을 한 문장으로 써 보세요.",
+    placeholder="예: 이 기간에는 ○○ 장르의 영화가 가장 많았다.",
+    height=100,
+    key="graph1_observation"
 )
-
-
-# ==================================================
-# 앞으로 추가할 그래프
-# ==================================================
-st.header("5. 다음 그래프")
-
-st.write("앞으로 새로운 그래프를 이곳에 계속 추가할 수 있습니다.")
