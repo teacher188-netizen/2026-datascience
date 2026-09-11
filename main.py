@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -51,8 +52,16 @@ df["genre_first"] = (
     .str.strip()
 )
 
-# 빈 값 처리
 df["genre_first"] = df["genre_first"].replace("", "미상")
+
+# 총 관객을 숫자로 변환
+df["total_audi"] = pd.to_numeric(
+    df["total_audi"],
+    errors="coerce"
+)
+
+# 영화명 결측치 처리
+df["movieNm"] = df["movieNm"].fillna("영화명 미상")
 
 
 # ==================================================
@@ -71,9 +80,7 @@ genre_count = (
 
 genre_count.columns = ["장르", "영화 편수"]
 
-total_movies = genre_count["영화 편수"].sum()
-
-fig = px.pie(
+fig1 = px.pie(
     genre_count,
     names="장르",
     values="영화 편수",
@@ -81,7 +88,7 @@ fig = px.pie(
     title="장르별 영화 편수"
 )
 
-fig.update_traces(
+fig1.update_traces(
     textinfo="percent",
     hovertemplate=(
         "<b>%{label}</b><br>"
@@ -90,23 +97,21 @@ fig.update_traces(
     )
 )
 
-fig.update_layout(
+fig1.update_layout(
     height=550,
     margin=dict(t=70, b=30, l=30, r=30),
     legend_title="장르"
 )
 
 st.plotly_chart(
-    fig,
+    fig1,
     use_container_width=True
 )
 
 
 # ==================================================
-# 그래프로 알 수 있는 것
+# 그래프 1 해석
 # ==================================================
-
-st.markdown("---")
 
 st.markdown("### 💡 이 그래프로 알 수 있는 것")
 
@@ -116,3 +121,63 @@ st.text_area(
     height=100,
     key="graph1_observation"
 )
+
+
+# ==================================================
+# 2. 장르별 영화와 총 관객
+# ==================================================
+
+st.divider()
+
+st.subheader("🌳 그래프 2. 장르별 영화와 총 관객")
+
+st.markdown(
+    """
+    **사각형의 크기가 클수록 총 관객이 많은 영화입니다.**
+    장르 안에서 어떤 영화가 많은 관객을 모았는지 살펴보세요.
+    """
+)
+
+treemap_df = df[
+    ["genre_first", "movieNm", "total_audi"]
+].dropna(subset=["total_audi"]).copy()
+
+fig2 = px.treemap(
+    treemap_df,
+    path=["genre_first", "movieNm"],
+    values="total_audi",
+    title="장르별 영화 총 관객"
+)
+
+fig2.update_traces(
+    hovertemplate=(
+        "<b>%{label}</b><br>"
+        "총 관객: %{value:,.0f}명"
+        "<extra></extra>"
+    )
+)
+
+fig2.update_layout(
+    height=700,
+    margin=dict(t=70, b=30, l=20, r=20)
+)
+
+st.plotly_chart(
+    fig2,
+    use_container_width=True
+)
+
+
+# ==================================================
+# 그래프 2 해석
+# ==================================================
+
+st.markdown("### 💡 이 그래프로 알 수 있는 것")
+
+st.text_area(
+    "그래프를 보고 알 수 있는 점을 한 문장으로 써 보세요.",
+    placeholder="예: ○○ 장르에서는 △△ 영화의 총 관객이 가장 많았다.",
+    height=100,
+    key="graph2_observation"
+)
+```
