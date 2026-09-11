@@ -250,7 +250,7 @@ movie_summary = (
     df.groupby("영화명")
     .agg(
         일관객합계=("일관객", "sum"),
-        10위권_등장일수=("날짜", "nunique")
+        등장일수=("날짜", "nunique")
     )
     .reset_index()
 )
@@ -282,7 +282,7 @@ fig4.update_traces(
         "10위권 등장일수: %{customdata}일"
         "<extra></extra>"
     ),
-    customdata=top10_movies["10위권_등장일수"]
+    customdata=top10_movies["등장일수"]
 )
 
 fig4.update_layout(
