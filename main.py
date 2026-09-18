@@ -65,3 +65,21 @@ for 이름, 변수 in [("기본 변수만", list(기본.values())),
     결과.append({"쓴 변수": 이름, "R²": round(r2_score(test["total_audi"], m.predict(test[변수])), 3)})
 st.dataframe(pd.DataFrame(결과), hide_index=True)
 st.caption("사후 집계값을 사용한 교육용 비교입니다. 실제 개봉 전 예측 성능을 뜻하지 않습니다.")
+
+# 도전 — 단서를 하나 만들어 넣으면 (main.py에 이어 붙일 부분)
+st.subheader("도전 — 상영당 관객 수 만들기")
+st.caption("예측 시점: 각 영화의 첫 관측일 집계가 끝난 뒤")
+daily = pd.read_csv(DAILY, dtype={"영화코드": str})
+daily["날짜"] = daily["날짜"].astype(str)
+첫날 = daily.sort_values("날짜").groupby("영화코드").first()          # 10위권에 처음 든 날
+첫날["상영당 관객 수"] = 첫날["일관객"] / 첫날["상영횟수"]                       # 한 번 상영에 몇 명이 들었나
+df2 = df.join(첫날[["상영당 관객 수"]], on="movieCd")
+st.plotly_chart(px.histogram(df2, x="상영당 관객 수"), use_container_width=True)   # 넣기 전에 분포부터 본다
+train2, test2 = df2[~is_test], df2[is_test]
+
+비교 = []
+for 이름, 변수 in [("기본 변수만", list(기본.values())),
+                ("+ 첫 관측일 상영당 관객 수", list(기본.values()) + ["상영당 관객 수"])]:
+    m2 = LinearRegression().fit(train2[변수], train2["total_audi"])
+    비교.append({"쓴 변수": 이름, "R²": round(r2_score(test2["total_audi"], m2.predict(test2[변수])), 3)})
+st.dataframe(pd.DataFrame(비교), hide_index=True)
