@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/danggok_meals_184.csv"
+URL = "https://raw.githubusercontent.com/teacher188-netizen/2026-datascience/refs/heads/main/%EA%B8%89%EC%8B%9D%EC%8B%9D%EB%8B%A8%EC%A0%95%EB%B3%B4%20(2).csv"
 
 st.title("🍚 급식 규칙 찾기")
 
