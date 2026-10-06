@@ -24,8 +24,7 @@ st.caption("같은 날 함께 나온 메뉴에서 연관규칙을 찾아봅니�
 # =========================================================
 
 DATA_URL = (
-    "https://raw.githubusercontent.com/teacher188-netizen/"
-    "2026-datascience/refs/heads/main/sangok_meals.csv"
+    "https://raw.githubusercontent.com/teacher188-netizen/2026-datascience/refs/heads/main/ara_meals.csv"
 )
 
 
