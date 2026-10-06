@@ -38,12 +38,14 @@ def load_data():
 
     # 메뉴를 | 기준으로 분리
     df["메뉴목록"] = df["요리명"].fillna("").apply(
-        lambda x: [menu.strip() for menu in x.split("|") if menu.strip()]
+        lambda x: [
+            menu.strip()
+            for menu in x.split("|")
+            if menu.strip()
+        ]
     )
 
     # 괄호와 그 안의 내용 제거
-    # 예: 돈까스(소스) → 돈까스
-    # 예: 샐러드(요거트(소스)) → 샐러드
     def clean_menu(menu):
         previous = None
 
@@ -61,7 +63,7 @@ def load_data():
         ]
     )
 
-    # 같은 날 같은 메뉴가 중복으로 기록되어 있다면 한 번만 인정
+    # 같은 날 같은 메뉴가 중복 기록되어 있다면 한 번만 인정
     df["메뉴목록"] = df["메뉴목록"].apply(
         lambda menus: sorted(set(menus))
     )
@@ -81,10 +83,10 @@ def make_rules(df):
 
     total_days = len(df)
 
-    # 각 메뉴가 나온 날짜 수
+    # 메뉴별 등장 일수
     menu_count = {}
 
-    # 메뉴 쌍이 함께 나온 날짜 수
+    # 메뉴 쌍별 동시 등장 일수
     pair_count = {}
 
     for menus in df["메뉴목록"]:
@@ -104,11 +106,13 @@ def make_rules(df):
 
     for (a, b), count in pair_count.items():
 
-        # A → B
         support = count / total_days
 
+        # A → B
         confidence_a_b = count / menu_count[a]
-        lift_a_b = confidence_a_b / (menu_count[b] / total_days)
+        lift_a_b = confidence_a_b / (
+            menu_count[b] / total_days
+        )
 
         rules.append({
             "조건": a,
@@ -121,7 +125,9 @@ def make_rules(df):
 
         # B → A
         confidence_b_a = count / menu_count[b]
-        lift_b_a = confidence_b_a / (menu_count[a] / total_days)
+        lift_b_a = confidence_b_a / (
+            menu_count[a] / total_days
+        )
 
         rules.append({
             "조건": b,
@@ -160,16 +166,18 @@ st.divider()
 
 
 # =========================================================
-# 필터
+# 연관규칙 필터
 # =========================================================
 
-col1, col2 = st.columns([2, 1])
+st.subheader("🔎 연관규칙 찾기")
+
+col1, col2, col3 = st.columns([2, 1, 1])
 
 with col1:
     menu_options = ["전체 메뉴"] + sorted(menu_count.keys())
 
     selected_menu = st.selectbox(
-        "메뉴 선택",
+        "메뉴로 좁혀 보기",
         menu_options
     )
 
@@ -179,13 +187,28 @@ with col2:
         ["향상도", "신뢰도", "동시"]
     )
 
+with col3:
+    min_cooccurrence = st.slider(
+        "최소 동시 일수",
+        min_value=1,
+        max_value=10,
+        value=1,
+        step=1
+    )
+
 
 # =========================================================
-# 메뉴 필터
+# 연관규칙 필터 적용
 # =========================================================
 
 filtered_rules = rules_df.copy()
 
+# 최소 동시 일수
+filtered_rules = filtered_rules[
+    filtered_rules["동시"] >= min_cooccurrence
+]
+
+# 메뉴 선택
 if selected_menu != "전체 메뉴":
     filtered_rules = filtered_rules[
         (filtered_rules["조건"] == selected_menu) |
@@ -198,18 +221,21 @@ if selected_menu != "전체 메뉴":
 # =========================================================
 
 if sort_option == "향상도":
+
     filtered_rules = filtered_rules.sort_values(
         ["향상도", "신뢰도", "동시"],
         ascending=[False, False, False]
     )
 
 elif sort_option == "신뢰도":
+
     filtered_rules = filtered_rules.sort_values(
         ["신뢰도", "향상도", "동시"],
         ascending=[False, False, False]
     )
 
 else:
+
     filtered_rules = filtered_rules.sort_values(
         ["동시", "향상도", "신뢰도"],
         ascending=[False, False, False]
@@ -217,7 +243,16 @@ else:
 
 
 # =========================================================
-# 표
+# 남은 규칙 수
+# =========================================================
+
+st.write(
+    f"조건에 맞는 규칙 **{len(filtered_rules):,}개**"
+)
+
+
+# =========================================================
+# 연관규칙 표
 # =========================================================
 
 st.subheader("📋 급식 연관규칙")
@@ -255,13 +290,14 @@ top10 = filtered_rules.head(10).copy()
 
 if len(top10) > 0:
 
-    # 그래프에서 조건 → 결과 형태로 표시
     top10["규칙"] = (
         top10["조건"] + " → " + top10["결과"]
     )
 
-    # 그래프는 높은 값이 위로 오도록 뒤집기
-    top10 = top10.sort_values("향상도", ascending=True)
+    top10 = top10.sort_values(
+        "향상도",
+        ascending=True
+    )
 
     fig = px.bar(
         top10,
@@ -282,7 +318,12 @@ if len(top10) > 0:
 
     fig.update_layout(
         height=max(400, len(top10) * 50),
-        margin=dict(l=20, r=80, t=20, b=20),
+        margin=dict(
+            l=20,
+            r=80,
+            t=20,
+            b=20
+        ),
         yaxis=dict(
             categoryorder="array",
             categoryarray=top10["규칙"].tolist()
@@ -295,7 +336,109 @@ if len(top10) > 0:
     )
 
 else:
-    st.info("조건에 맞는 연관규칙이 없습니다.")
+
+    st.info(
+        "조건에 맞는 연관규칙이 없습니다."
+    )
+
+
+# =========================================================
+# 함께 나온 적 없는 짝
+# =========================================================
+
+st.divider()
+
+st.subheader("🚫 함께 나온 적 없는 짝")
+
+st.caption(
+    "선택한 메뉴와 한 번도 같은 날 나오지 않았으며, "
+    "혼자서는 10일 이상 나온 메뉴를 보여줍니다."
+)
+
+
+# 메뉴 선택
+selected_no_pair_menu = st.selectbox(
+    "비동시 메뉴 찾기",
+    sorted(menu_count.keys()),
+    key="no_pair_menu"
+)
+
+
+# 선택한 메뉴가 나온 날짜
+selected_menu_days = set()
+
+for _, row in df.iterrows():
+
+    if selected_no_pair_menu in row["메뉴목록"]:
+        selected_menu_days.add(row["급식일자"])
+
+
+# 각 메뉴가 나온 날짜를 구함
+menu_dates = {}
+
+for _, row in df.iterrows():
+
+    date = row["급식일자"]
+
+    for menu in row["메뉴목록"]:
+
+        if menu not in menu_dates:
+            menu_dates[menu] = set()
+
+        menu_dates[menu].add(date)
+
+
+# 함께 나온 적 없는 메뉴 찾기
+no_pair_results = []
+
+selected_dates = selected_menu_days
+
+for menu, dates in menu_dates.items():
+
+    # 자기 자신은 제외
+    if menu == selected_no_pair_menu:
+        continue
+
+    # 혼자서 10일 이상 나온 메뉴만
+    if len(dates) < 10:
+        continue
+
+    # 날짜가 하나라도 겹치면 제외
+    if selected_dates.intersection(dates):
+        continue
+
+    no_pair_results.append({
+        "메뉴": menu,
+        "나온 날": len(dates)
+    })
+
+
+# 나온 날이 많은 순으로 정렬
+no_pair_df = pd.DataFrame(no_pair_results)
+
+if len(no_pair_df) > 0:
+
+    no_pair_df = no_pair_df.sort_values(
+        "나온 날",
+        ascending=False
+    ).reset_index(drop=True)
+
+    st.write(
+        f"**{selected_no_pair_menu}**와 함께 나온 적 없는 메뉴 "
+        f"**{len(no_pair_df):,}개**"
+    )
+
+    st.dataframe(
+        no_pair_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+else:
+
+    st.info(
+        "조건에 맞는 메뉴가 없습니다."
+    )
 
 
 # =========================================================
