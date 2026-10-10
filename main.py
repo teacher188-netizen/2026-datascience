@@ -5,7 +5,13 @@ import streamlit as st
 st.set_page_config(page_title="뇌졸중 예측 실습실", page_icon="🩺", layout="wide")
 st.title("🩺 뇌졸중 예측 실습실")
 st.write("건강 기록 5,110명분을 읽어 옵니다. 왼쪽 메뉴에서 페이지를 넘기며 들여다보고, 모델을 만들고, 채점합니다.")
+# 페이지 이동 메뉴
+페이지 = st.navigation([
+    st.Page("main.py", title="실습실 홈", icon="🏠", default=True),
+    st.Page("pages/1_탐색.py", title="1. 데이터 탐색", icon="🔎"),
+])
 
+페이지.run()
 데이터주소 = "https://raw.githubusercontent.com/greatsong/modudata/main/data/stroke.csv"
 
 
