@@ -41,6 +41,7 @@ def 홈_화면():
 페이지 = st.navigation([
     st.Page(홈_화면, title="실습실 홈", icon="🏠", default=True),
     st.Page("pages/1_탐색.py", title="1. 데이터 탐색", icon="🔎"),
+    st.Page("pages/2_분류_모델.py", title="2. 분류 모델", icon="🔎"),
 ])
 
 페이지.run()
