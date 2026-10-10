@@ -6,13 +6,7 @@ import streamlit as st
 st.set_page_config(page_title="탐색", page_icon="🔍", layout="wide")
 st.title("🔍 탐색")
 st.write("모델을 만들기 전에 데이터를 들여다봅니다. 화면의 값을 교재의 빈 표에 적으세요.")
-# 페이지 이동 메뉴
-페이지 = st.navigation([
-    st.Page("main.py", title="실습실 홈", icon="🏠", default=True),
-    st.Page("pages/1_탐색.py", title="1. 데이터 탐색", icon="🔎"),
-])
 
-페이지.run()
 
 데이터주소 = "https://raw.githubusercontent.com/greatsong/modudata/main/data/stroke.csv"
 
