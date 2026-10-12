@@ -31,6 +31,16 @@ def 홈_화면():
 
     df = 데이터_읽기()
 
+    def 적어둔것_읽기():
+        """전에 적어 둔 내용을 읽는다. 아직 없으면 빈 사전을 돌려준다."""
+        try:
+            return json.loads(저장파일.read_text(encoding="utf-8"))
+        except (FileNotFoundError, ValueError):
+            return {}
+
+
+    적어둔것 = 적어둔것_읽기()
+
     칸1, 칸2, 칸3, 칸4 = st.columns(4)
     칸1.metric("전체 사람 수", f"{len(df):,}명")
     칸2.metric("열 개수", f"{df.shape[1]}개")
