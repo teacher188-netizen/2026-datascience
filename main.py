@@ -220,7 +220,7 @@ def 홈_화면():
     st.Page(
         "pages/3_채점표.py",
         title="3. 채점표",
-        icon="🧠"
+        icon="📋"
     ),
 ])
 
