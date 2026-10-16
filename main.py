@@ -222,6 +222,11 @@ def 홈_화면():
         title="3. 채점표",
         icon="📋"
     ),
+    st.Page(
+        "pages/4_전처리.py",
+        title="4. 전처리",
+        icon="📋"
+    ),
 ])
 
 페이지.run()
