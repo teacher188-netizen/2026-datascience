@@ -217,6 +217,11 @@ def 홈_화면():
         title="2. 분류 모델",
         icon="🧠"
     ),
+    st.Page(
+        "pages/3_채점표.py",
+        title="3. 채점표",
+        icon="🧠"
+    ),
 ])
 
 페이지.run()
